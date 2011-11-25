@@ -60,23 +60,37 @@ $n->nagios_die("failed to initiate SNMP session") unless $sess;
 my $fwVersion = '.1.3.6.1.4.1.1714.1.1.1.5.0';
 #my $fwVersion = '.1.3.6.1.4.1.1714.1.1.1.1.5.0';
 
-$fwVersion = $sess->get($fwVersion);
-if (!defined $fwVersion) {
-    $n->nagios_die("$hostname is not supported by this plugin");
-}
-if ($fwVersion eq 'NOSUCHOBJECT') {
-    DEBUG "using newer MIB";
-    &SNMP::addMibFiles($mib_base . '/IFT_MIB_v1.11G14.mib');
-} elsif ($fwVersion < 48) {
-    DEBUG "using older MIB"; 
-    &SNMP::addMibFiles($mib_base . '/IFT-SNMP-MIB.mib');
-} else {
-    $n->nagios_die("unknown RAID type/firmware");
+# Set a timeout around this - $fwVersion can be returned undefined if either the raid gives the wrong
+# response or no response, so we can't work out which it is. So set our own timeout faster than
+# the SNMP one to pick this up. The longer SNMP timeout is useful for the later stages where
+# we load a whole table
+eval {
+	$SIG{ALRM} = sub { die "Timeout"; };
+	alarm(20);
+	$fwVersion = $sess->get($fwVersion);
+	#DEBUG Dumper $fwVersion;
+	alarm(0);
+	if (!defined $fwVersion) {
+   		$n->nagios_die("$hostname is not supported by this plugin (or SNMP is taking a long time to respond)");
+	}
+	if ($fwVersion eq 'NOSUCHOBJECT') {
+    		DEBUG "using newer MIB";
+    		&SNMP::addMibFiles($mib_base . '/IFT_MIB_v1.11G14.mib');
+	} elsif ($fwVersion < 48) {
+    		DEBUG "using older MIB"; 
+    		&SNMP::addMibFiles($mib_base . '/IFT-SNMP-MIB.mib');
+	} else {
+    		$n->nagios_die("unknown RAID type/firmware");
+	}
+};
+
+if ($@ && $@ =~ /Timeout/) {
+	$n->nagios_die("RAID took too long to respond - it maybe be busy in I/O");
 }
 
 # hdd table = physical devices
-my $hddTable = $sess->gettable('hddTable', { noindexes => 1 });
-#DEBUG Dumper $hddTable;
+my $hddTable = $sess->gettable('hddTable');
+DEBUG Dumper $hddTable;
 #          '5' => {
 #                   'hddSpeed' => '10',
 #                   'hddSlotNum' => '5',
@@ -135,7 +149,7 @@ foreach (sort keys %$hddTable) {
     }
 }
 
-my $ldTable = $sess->gettable('ldTable', { noindexes => 1 });
+my $ldTable = $sess->gettable('ldTable');
 DEBUG Dumper $ldTable;
 foreach (sort keys %$ldTable) {
     my $ld = $ldTable->{$_};
@@ -176,35 +190,24 @@ foreach (sort keys %$ldTable) {
         DEBUG "ldstatus is [$status]";
         $n->add_message(CRITICAL, "LD $id is broken");
     }
+}
 
+# Checking for knackered redundant controllers
+#For some reason the textual version doesn't work. 
+#Do an SNMP walk for redCtlrStatus with -O n to find this number
+if ($fwVersion eq 'NOSUCHOBJECT') {
+	# Only works on new MIB stuff
+	my $controllers = $sess->get('.1.3.6.1.4.1.1714.1.1.1.6.4.0');
 
-#    DESCRIPTION "Logical drive state
-#                    BIT 0 : If SET, in process of rebuilding
-#                            (degraded mode) or checking/updating
-#                            Logical Drive Parity (LD is 'good').
-#                    BIT 1 : If SET, in process of expanding Logical Drive.
-#                    BIT 2 : If SET, in process of adding SCSI drives
-#                            to Logical Drive.
-#                    BIT 3-5: Reserved.
-#                    BIT 6 : If SET, add SCSI drives operation is paused.
-#                    BIT 7 : Reserved."
-    
-    # extract bits 0-2
-    DEBUG Dumper $state;
-    $bv = Bit::Vector->new_Dec(8, $state);
-    $enum = $bv->to_Enum;
-    DEBUG "ld state: $enum";
-    if ($bv->bit_test(1)) {
-        DEBUG "ldstate is [$state]";
-        $n->add_message(WARNING, 
-            "LD $id is rebuilding/checking/updating parity");
-    }
-
-
+	# 0x3F bits being set indicates a controller failure. So this test is sufficient for the moment
+	if(defined $controllers and $controllers > 32) {
+		$n->add_message(CRITICAL,"Redundant Controller failure has been detected - system has failed over");
+	}
+DEBUG Dumper $controllers;
 }
 
 # luDev = random devices
-my $luDevTable = $sess->gettable('luDevTable', { noindexes => 1 });
+my $luDevTable = $sess->gettable('luDevTable');
 DEBUG Dumper $luDevTable;
 
 foreach (sort keys %$luDevTable) {

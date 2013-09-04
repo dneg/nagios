@@ -26,7 +26,7 @@ foreach my $line (@output) {
 }
 
 print "Everything OK\n";
-exit 0
+exit 0;
 
 sub critical {
   my $message = shift;

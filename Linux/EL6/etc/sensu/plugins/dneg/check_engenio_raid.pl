@@ -125,7 +125,7 @@ sub check_health {
     # fall through to failures - doesn't appear to be a health status = failed. line
     elsif (grep { /^The following failures have been found/ } @output) {
         $n->add_message(CRITICAL, 'storage array has failures');
-        #print Dumper @output;
+        print Dumper @output;
         if (grep { /^Volume - Hot Spare In Use/ } @output) {
             $n->add_message(CRITICAL, 'hot spare in use');
         }
@@ -137,6 +137,9 @@ sub check_health {
         }
         if (grep { /^Disk Pool Capacity - Warning Threshold Exceeded/ } @output) {
             $n->add_message(CRITICAL, 'disk pool capacity');
+        }
+        if (grep { /^Individual Drive - Degraded Path/ } @output) {
+            $n->add_message(CRITICAL, 'degraded drive path');
         }
         
     }

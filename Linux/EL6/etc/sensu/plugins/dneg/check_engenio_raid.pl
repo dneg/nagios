@@ -14,7 +14,7 @@ use Nagios::Plugin;
 use Data::Dumper;
 
 # paths to SMcli, we are going to try them all in order until we find one
-my @sm_cli = qw(/opt/SMgr/client/SMcli /opt/dell/mdstoragesoftware/mdstoragemanager/client/SMcli /opt/dell/mdstoragesoftware/client/SMcli);
+my @sm_cli = qw(/opt/SMgr/client/SMcli /opt/dell/mdstoragesoftware/mdstoragemanager/client/SMcli /opt/dell/mdstoragemanager/client/SMcli);
 
 my $n = Nagios::Plugin->new(
     shortname   => 'engenio_raid',

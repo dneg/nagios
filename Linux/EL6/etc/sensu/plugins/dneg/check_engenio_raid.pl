@@ -31,7 +31,7 @@ $n->nagios_die("no hostname specified") unless $n->opts->hostname;
 
 check_health();
 
-$n->nagios_exit($n->check_messages);
+$n->nagios_exit($n->check_messages(join_all => "\n"));
 
 # Storage array health status = optimal.
 
@@ -125,7 +125,6 @@ sub check_health {
     # fall through to failures - doesn't appear to be a health status = failed. line
     elsif (grep { /^The following failures have been found/ } @output) {
         $n->add_message(CRITICAL, 'storage array has failures');
-        print Dumper @output;
         if (grep { /^Volume - Hot Spare In Use/ } @output) {
             $n->add_message(CRITICAL, 'hot spare in use');
         }
@@ -150,6 +149,9 @@ sub check_health {
         $n->add_message(WARNING, 'storage array is in an unknown state');
         $n->add_message(WARNING, @output);
     }
+
+    $n->add_message(OK, "\n\n");
+    $n->add_message(OK, join "\n", @output);
 
 }
 

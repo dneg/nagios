@@ -21,7 +21,6 @@ use FindBin;
 
 # FindBin doesn't work if we are running in the embedded perl
 my $mib_base = $FindBin::Bin;
-$mib_base = '/etc/sensu/plugins/dneg';
 
 my $n = Nagios::Plugin->new(
     version => '2.01',
@@ -207,7 +206,7 @@ DEBUG Dumper $controllers;
 }
 
 # luDev = random devices
-my $luDevTable = $sess->gettable('luDevTable');
+my $luDevTable = $sess->gettable('luDevTable', noindexes => 1);
 DEBUG Dumper $luDevTable;
 
 foreach (sort keys %$luDevTable) {

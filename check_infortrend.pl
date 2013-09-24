@@ -21,7 +21,7 @@ use FindBin;
 
 # FindBin doesn't work if we are running in the embedded perl
 my $mib_base = $FindBin::Bin;
-$mib_base = '/usr/lib/nagios/plugins' if -d '/usr/lib/nagios/plugins';
+$mib_base = '/etc/sensu/plugins/dneg';
 
 my $n = Nagios::Plugin->new(
     version => '2.01',

@@ -173,6 +173,16 @@ foreach (sort keys %$ldTable) {
 #                    BITS 7 : Logical Drive Off-line (RW)."
 
 
+    # extract bits 0-2
+    my $bv = Bit::Vector->new_Dec(8, $status);
+    DEBUG Dumper $bv;
+    my $enum = $bv->to_Enum;
+    DEBUG "ld status: $enum";
+    my $status_bv = Bit::Vector->new(2);
+    $status_bv->Interval_Copy($bv, 0, 0, 3);
+    $status = $status_bv->to_Dec;
+    DEBUG "bits 0-2: $status";
+
     if ($status != 0) {
         DEBUG "ldstatus is [$status]";
         if ( $status == 1 ){
@@ -187,6 +197,7 @@ foreach (sort keys %$ldTable) {
         else{
             $n->add_message(CRITICAL, "LD $id is BROKEN");
         }
+        
     }
 }
 

@@ -133,17 +133,18 @@ DEBUG Dumper $hddTable;
 
 foreach (sort keys %$hddTable) {
     my $hdd = $hddTable->{$_};
-
     my $slot = $hdd->{hddSlotNum};
     my $status = $hdd->{hddStatus};
-
-    if ($hdd->{hddStatus} != 1 && # on-line
-        $hdd->{hddStatus} != 3 && # spare
-        $hdd->{hddStatus} != 4 && # initializing
-        $hdd->{hddStatus} != 5 && # rebuild
-        $hdd->{hddStatus} != 9 && # global spare
+    if ($status == 5 ){
+        $n->add_message(WARNING, "Drive in slot $slot is rebuilding");
+    }
+    elsif (
+        $hdd->{hddState} != 1 && # on-line
+        $status != 3 && # spare
+        $status != 4 && # initializing
+        $status != 9 && # global spare
         $hdd->{hddSize} > 0) {
-#        DEBUG Dumper $hdd;
+        DEBUG Dumper $hdd;
         $n->add_message(CRITICAL, "Drive in slot $slot is broken");
     }
 }
@@ -172,22 +173,20 @@ foreach (sort keys %$ldTable) {
 #                    BITS 7 : Logical Drive Off-line (RW)."
 
 
-    if ($failed > 0) {
-        $n->add_message(CRITICAL, "LD $id has $failed failed drives");
-    }
-
-    # extract bits 0-2
-    my $bv = Bit::Vector->new_Dec(8, $status);
-    my $enum = $bv->to_Enum;
-    DEBUG "ld status: $enum";
-    my $status_bv = Bit::Vector->new(2);
-    $status_bv->Interval_Copy($bv, 0, 1, 2);
-    $status = $status_bv->to_Dec;
-    DEBUG "bits 0-2: $status";
-
     if ($status != 0) {
         DEBUG "ldstatus is [$status]";
-        $n->add_message(CRITICAL, "LD $id is broken");
+        if ( $status == 1 ){
+            $n->add_message(WARNING, "LD $id is rebuilding");
+        }
+        elsif( $status == 2 ){
+            $n->add_message(WARNING, "LD $id is initializing");
+        }
+        elsif( $status == 3 ){
+            $n->add_message(CRITICAL, "LD $id is DEGRADED");
+        }
+        else{
+            $n->add_message(CRITICAL, "LD $id is BROKEN");
+        }
     }
 }
 

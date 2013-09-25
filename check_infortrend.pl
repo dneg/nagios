@@ -139,7 +139,7 @@ foreach (sort keys %$hddTable) {
         $n->add_message(WARNING, "Drive in slot $slot is rebuilding");
     }
     elsif (
-        $hdd->{hddState} != 1 && # on-line
+        $status != 1 && # on-line
         $status != 3 && # spare
         $status != 4 && # initializing
         $status != 9 && # global spare

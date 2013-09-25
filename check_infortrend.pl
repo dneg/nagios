@@ -4,11 +4,6 @@
 # Nagios plugin for Infortrend RAID arrays
 # James Braid <jamesb@loreland.org>
 #
-# This nagios plugin is free software, and comes with ABSOLUTELY 
-# NO WARRANTY. It may be used, redistributed and/or modified under 
-# the terms of the GNU General Public Licence (see 
-# http://www.fsf.org/licensing/licenses/gpl.txt).
-#
 # This plugin monitors Infortrend RAID arrays. There are a couple of different 
 # MIBs which Infortrend uses. This plugin should deal with both of them.
 #

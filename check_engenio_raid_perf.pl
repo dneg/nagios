@@ -78,8 +78,9 @@ foreach my $chunk (@results) {
 sub thing_map {
     my $thing = shift;
     $thing =~ s/^STORAGE ARRAY TOTALS$/array/g;
-    $thing =~ s/^CONTROLLER IN SLOT (\d+)$/ctrl$1/g;
-    $thing =~ s/^Virtual Disk (\d+)$/vdisk$1/g;
+    $thing =~ s/^CONTROLLER IN SLOT (\w+)$/ctrl$1/g;
+    $thing =~ s/^(Virtual Disk|Volume) (\w+)$/vdisk$2/g;
+    $thing = lc $thing;
     return $thing;
 }
 
@@ -103,6 +104,8 @@ sub run_sm_cli {
 
     # we need to connect to both controllers
     my $controllers = sprintf "%sa %sb", $hostname, $hostname;
+
+    $command =~ s/allVirtualDisks/allVolumes/g if ($sm_cli =~ /SMgr/);
 
     # -S = supress informational messages (parsing command, running command, command success, etc)
     my $cmd = sprintf '%s %s -S -c "%s"', $sm_cli, $controllers, $command;

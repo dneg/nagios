@@ -90,7 +90,7 @@ sub stat_map {
     $tidy_key =~ s/\s+$//g;
     $tidy_key =~ s/\s+/_/g;
     $tidy_key =~ s/\//_/g;
-    $tidy_key =~ s/%/pct/g;
+    $tidy_key =~ s/%/percentage/g;
     $tidy_key = lc $tidy_key;
     return $tidy_key;
 }

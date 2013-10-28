@@ -10,6 +10,7 @@ use Nagios::Plugin;
 use Data::Dumper;
 use RPC::XML::Client;
 use MIME::Base64;
+use HTML::Strip;
 
 my $n = Nagios::Plugin->new(
     shortname   => 'avere',
@@ -53,11 +54,19 @@ sub check_health {
     $n->nagios_die("login failed") if ($resp->value() ne 'success');
 
     my $alerts = $cli->simple_request('alert.events');
-    if (@$alerts) {
-        $n->add_message(CRITICAL, 'alerts');
-        $n->add_message(OK, "\n\n");
-        $n->add_message(OK, join "\n", @$alerts);
+    foreach my $alert (@$alerts) {
+        my $sev = $alert->{severity};
+        my $xmldesc = $alert->{xmldescription};
+        my $hs = HTML::Strip->new();
+        my $clean = $hs->parse($xmldesc);
+        $hs->eof;
+        $n->add_mesage(CRITICAL, "alerts -> $clean") if ($sev != 'green');
     }
+    #if (@$alerts) {
+    #    $n->add_message(CRITICAL, 'alerts');
+    #    $n->add_message(OK, "\n\n");
+    #    $n->add_message(OK, join "\n", @$alerts);
+    #}
 }
 
 

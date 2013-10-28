@@ -53,6 +53,7 @@ sub check_health {
 
     $n->nagios_die("login failed") if ($resp->value() ne 'success');
 
+    # get a list of current events
     my $alerts = $cli->simple_request('alert.events');
     foreach my $alert (@$alerts) {
         my $sev = $alert->{severity};
@@ -67,6 +68,15 @@ sub check_health {
     #    $n->add_message(OK, "\n\n");
     #    $n->add_message(OK, join "\n", @$alerts);
     #}
+
+    # make sure all our nodes and vservers are up
+    foreach my $thing (qw(node vserver)) {
+        my $things = $cli->simple_request("${thing}.list");
+        foreach my $node (@$things) {
+            my $node_info = $cli->simple_request("${thing}.get", $node);
+            $n->add_message(CRITICAL, "$thing $node is not in 'up' state") unless $node_info->{$node}->{state} eq 'up';
+        }
+    }
 }
 
 

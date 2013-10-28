@@ -18,7 +18,7 @@ my $n = Nagios::Plugin->new(
 
 $n->add_arg(
     spec => 'hostname|H=s',
-    help => '--hostname=HOSTNAME - hostname of the RAID controller',
+    help => '--hostname=HOSTNAME - hostname of the Avere management interface',
 );
 
 $n->add_arg(

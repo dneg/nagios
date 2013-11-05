@@ -13,6 +13,7 @@ use File::Slurp qw(read_file);
 use lib qw(/tools/SITE/perl);
 use dnutil qw(dnsite_sg);
 use Text::CSV;
+use IPC::Run qw(run timeout);
 
 # paths to SMcli, we are going to try them all in order until we find one
 my @sm_cli = qw(/opt/SMgr/client/SMcli /opt/dell/mdstoragesoftware/mdstoragemanager/client/SMcli /opt/dell/mdstoragemanager/client/SMcli);
@@ -108,11 +109,13 @@ sub run_sm_cli {
     $command =~ s/allVirtualDisks/allVolumes/g if ($sm_cli =~ /SMgr/);
 
     # -S = supress informational messages (parsing command, running command, command success, etc)
-    my $cmd = sprintf '%s %s -S -c "%s"', $sm_cli, $controllers, $command;
+    my @cmd = ($sm_cli, $hostname, '-S', '-c', $command);
     #print "running $cmd\n";
-    my @lines = split /\n/, `$cmd`;
+    my ($out,$err);
+    run \@cmd, \undef, \$out, \$err, timeout ( 30 );
 
     my $ret = ($? >> 8);
+    my @lines = split /\n/, $out;
     $n->nagios_die("SMcli execution failed for command [$command] - syntax error?") unless ($ret == 0);
 
     return @lines;

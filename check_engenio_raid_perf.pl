@@ -104,12 +104,12 @@ sub run_sm_cli {
     my $sm_cli = find_sm_cli();
 
     # we need to connect to both controllers
-    my $controllers = sprintf "%sa %sb", $hostname, $hostname;
+    my @controllers = ($hostname."a", $hostname."b");
 
     $command =~ s/allVirtualDisks/allVolumes/g if ($sm_cli =~ /SMgr/);
 
     # -S = supress informational messages (parsing command, running command, command success, etc)
-    my @cmd = ($sm_cli, $hostname, '-S', '-c', $command);
+    my @cmd = ($sm_cli, @controllers, '-S', '-c', $command);
     #print "running $cmd\n";
     my ($out,$err);
     run \@cmd, \undef, \$out, \$err, timeout ( 30 );

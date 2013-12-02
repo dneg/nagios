@@ -19,12 +19,17 @@ my @sm_cli = qw(/opt/SMgr/client/SMcli /opt/dell/mdstoragesoftware/mdstoragemana
 
 my $n = Nagios::Plugin->new(
     shortname   => 'engenio_raid',
-    usage       => 'Usage: %s --hostname HOSTNAME',
+    usage       => 'Usage: %s --hostname HOSTNAME [--volume]',
 );
 
 $n->add_arg(
     spec => 'hostname|H=s',
     help => '--hostname=HOSTNAME - hostname of the RAID controller',
+);
+
+$n->add_arg(
+    spec => 'volume|v',
+    help => '--volume - Enable volume checks',
 );
 
 $n->getopts;
@@ -115,7 +120,7 @@ sub check_health {
             $n->add_message(CRITICAL, 'failed disk');
         }
         if (grep { /^(Degraded Virtual Disk|Degraded volume)$/ } @output ) {
-            $n->add_message(CRITICAL, 'degraded volume');
+            $n->add_message(CRITICAL, 'degraded volume') if $n->opts->volume;
         }
 
 #         } else {

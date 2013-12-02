@@ -114,7 +114,7 @@ sub check_health {
         if (grep { /^Failed physical disk$/ } @output) {
             $n->add_message(WARNING, 'failed disk');
         }
-        if (grep { /^Degraded virtual disk$/ } @output || grep { /^Degraded volume$/ } @output) {
+        if (grep { /^(Degraded Virtual Disk|Degraded volume)$/ } @output ) {
             $n->add_message(CRITICAL, 'degraded volume');
         }
 

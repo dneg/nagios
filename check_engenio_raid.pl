@@ -109,10 +109,10 @@ sub check_health {
 
     # otherwise we are fixing
     elsif (grep { /^Storage array health status = fixing.$/ } @output) {
-        $n->add_message(WARNING, 'storage array is repairing - ');
+        $n->add_message(OK, 'storage array is repairing - ');
 
         if (grep { /^Failed physical disk$/ } @output) {
-            $n->add_message(WARNING, 'failed disk');
+            $n->add_message(CRITICAL, 'failed disk');
         }
         if (grep { /^(Degraded Virtual Disk|Degraded volume)$/ } @output ) {
             $n->add_message(CRITICAL, 'degraded volume');

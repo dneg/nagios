@@ -61,7 +61,7 @@ sub check_health {
         my $hs = HTML::Strip->new();
         my $clean = $hs->parse($xmldesc);
         $hs->eof;
-        $n->add_mesage(CRITICAL, "alerts -> $clean") if ($sev != 'green');
+        $n->add_message(CRITICAL, "alerts -> $clean") if ($sev != 'green');
     }
     #if (@$alerts) {
     #    $n->add_message(CRITICAL, 'alerts');

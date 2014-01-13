@@ -32,8 +32,8 @@ $n->add_arg(
 );
 
 $n->add_arg(
-  spec    => 'timeout=s',
-  help    => '--timeout TIMEOUT - milliseconds before ping times out (Default: 2500)',
+  spec    => 'time=s',
+  help    => '--time TIMEOUT - milliseconds before ping times out (Default: 2500)',
   default => 2500
 );
 
@@ -57,7 +57,7 @@ $n->nagios_exit($n->check_messages(join_all => "\n"));
 
 sub run_nfsping {
   $nfsping = $nfsping . " -T" if $n->opts->get('use-tcp');
-  my $cmd = sprintf "%s -q -c %s -t %s %s", $nfsping, $n->opts->count, $n->opts->timeout, $n->opts->hostname;
+  my $cmd = sprintf "%s -q -c %s -t %s %s", $nfsping, $n->opts->count, $n->opts->time, $n->opts->hostname;
   my @output = `$cmd 2>&1`;
   chomp @output;
   my $searchstring = quotemeta "xmt/rcv/%loss";

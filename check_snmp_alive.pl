@@ -33,6 +33,6 @@ my $status = OK;
 
 my $sess = SNMP::Session->new( DestHost => $hostname, Version => '2', Timeout => '500000');
 my $val = $sess->get('sysDescr.0');
-$n->nagios_die("failed to initiate SNMP session") unless $val;
+$n->nagios_die("failed to initiate SNMP session", 2) unless $val;
 
 $n->nagios_exit($status, $val);

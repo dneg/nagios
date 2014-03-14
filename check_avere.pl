@@ -45,7 +45,7 @@ $n->nagios_exit($n->check_messages(join_all => "\n"));
 # check status via XML-RPC
 sub check_health {
 
-    my $url = sprintf "http://%s/cgi-bin/rpc2.py", $n->opts->hostname;
+    my $url = sprintf "https://%s/cgi-bin/rpc2.py", $n->opts->hostname;
     my $cli = RPC::XML::Client->new($url);
     $cli->useragent()->cookie_jar({});
 

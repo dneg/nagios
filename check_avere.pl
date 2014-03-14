@@ -51,6 +51,7 @@ sub check_health {
 
     my $resp = $cli->send_request('system.login', encode_base64($n->opts->username), encode_base64($n->opts->password));
 
+    $n->nagios_die("something failed with connecting to XML-RPC API") unless (ref $resp);
     $n->nagios_die("login failed") if ($resp->value() ne 'success');
 
     # get a list of current events

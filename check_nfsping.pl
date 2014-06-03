@@ -11,6 +11,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Nagios::Plugin;
+use Switch;
 
 my $nfsping = "/usr/bin/nfsping";
 
@@ -54,25 +55,32 @@ $n->nagios_die("no hostname specified") unless $n->opts->hostname;
 $n->nagios_die("nfsping not installed") unless (-e $nfsping);
 
 run_nfsping();
-$n->nagios_exit($n->check_messages(join_all => "\n"));
+$n->nagios_exit(OK, "");
 
 sub run_nfsping {
   $nfsping = $nfsping . " -T" if $n->opts->get('use-tcp');
   my $cmd = sprintf "%s -q -c %s -t %s %s", $nfsping, $n->opts->count, $n->opts->time, $n->opts->hostname;
   my @output = `$cmd 2>&1`;
   chomp @output;
+
+  # Search for known errors in output
   my $searchstring = quotemeta "xmt/rcv/%loss";
   foreach my $line (@output) {
-    # normal output
-    # filer1 : xmt/rcv/%loss = 5/5/0%, min/avg/max = 0.14/0.18/0.19
-    if ($line =~ /$searchstring/) {
-      $line =~ s/.*$searchstring = (.*)%.*/$1/;
-      my ($xmt, $rcv, $loss) = split(/\//, $line);
-      $n->add_message(CRITICAL, "nfsping loss $loss% above critical threshold 100%") if ($loss >= $n->opts->critical);
+    switch ($line) {
+
+      # normal output
+      # filer1 : xmt/rcv/%loss = 5/5/0%, min/avg/max = 0.14/0.18/0.19
+      case /$searchstring/ {
+        $line =~ s/.*$searchstring = (.*)%.*/$1/;
+        my ($xmt, $rcv, $loss) = split(/\//, $line);
+        $n->nagios_exit(CRITICAL, "nfsping loss $loss% above critical threshold 100%") if ($loss >= $n->opts->critical);
+      }
+
+      # in TCP mode, server hard down
+      # clnttcp_create: RPC: Remote system error - Connection timed out
+      case qr/clnttcp_create: RPC: Remote system error - Connection timed out/ { $n->nagios_exit(CRITICAL, "host is dead") }
+
     }
-    # in TCP mode, server hard down
-    # clnttcp_create: RPC: Remote system error - Connection timed out
-    $n->add_message(CRITICAL, "host is dead") if ($line =~ /clnttcp_create: RPC: Remote system error - Connection timed out/);
   }
 }
 

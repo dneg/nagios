@@ -51,6 +51,7 @@ $n->add_arg(
 
 $n->getopts;
 $n->nagios_die("no hostname specified") unless $n->opts->hostname;
+$n->nagios_die("nfsping not installed") unless (-e $nfsping);
 
 run_nfsping();
 $n->nagios_exit($n->check_messages(join_all => "\n"));

@@ -3,7 +3,7 @@
 # check_nfsping.pl
 # Author: Johan van den Dorpe <jvd@dneg.com>
 # Use nfsping to check the availability of an NFS server
-# 
+#
 # TODO: Also test mount protocol
 #       Handle hosts with multiple interfaces
 

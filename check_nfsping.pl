@@ -61,6 +61,7 @@ sub run_nfsping {
   $nfsping = $nfsping . " -T" if $n->opts->get('use-tcp');
   my $cmd = sprintf "%s -q -c %s -t %s %s", $nfsping, $n->opts->count, $n->opts->time, $n->opts->hostname;
   my @output = `$cmd 2>&1`;
+  my $result = $?;
   chomp @output;
 
   # Search for known errors in output
@@ -82,5 +83,8 @@ sub run_nfsping {
 
     }
   }
+
+  # If exitcode is not 0, return UNKNOWN
+  $n->nagios_exit(UNKNOWN, \@output) if ($result != 0)
 }
 

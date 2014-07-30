@@ -81,6 +81,10 @@ sub run_nfsping {
       # clnttcp_create: RPC: Remote system error - Connection timed out
       case qr/clnttcp_create: RPC: Remote system error - Connection timed out/ { $n->nagios_exit(CRITICAL, "host is dead") }
 
+      # server hard down
+      # clnttcp_create: RPC: Remote system error - No route to host
+      case qr/clnttcp_create: RPC: Remote system error - No route to host/ { $n->nagios_exit(CRITICAL, "host is dead") }
+
     }
   }
 

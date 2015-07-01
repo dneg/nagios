@@ -35,10 +35,16 @@ $n->add_arg(
 $n->getopts;
 $n->nagios_die("no hostname specified") unless $n->opts->hostname;
 
-check_health();
-
-$n->nagios_exit($n->check_messages(join_all => "\n"));
-
+# Check if raid is alive
+my @is_alive = run_sm_cli($n->opts->hostname, "show storageArray healthStatus;");
+if (grep {/Unknown or unresponsive address/} @is_alive){
+    check_health();
+    $n->nagios_exit($n->check_messages);
+}else{
+    # Run checks
+    check_health();
+    $n->nagios_exit($n->check_messages(join_all => "\n"));
+}
 # Storage array health status = optimal.
 
 # Storage array health status = fixing.                                     
@@ -146,7 +152,13 @@ sub check_health {
         if (grep { /^Individual Drive - Degraded Path/ } @output) {
             $n->add_message(CRITICAL, 'degraded drive path');
         }
-        
+        if (grep { /^(SMcli execution failed for command)$/ } @output ) {
+            $n->add_message(CRITICAL, 'cannot connect to raid array');
+        }
+
+    }
+    elsif (grep { /^Unknown or unresponsive address/ } @output ) {
+        $n->add_message(CRITICAL, 'Unknown or unresponsive address');
     }
 
 
@@ -176,7 +188,10 @@ sub run_sm_cli {
 
     my $ret = ($? >> 8);
     my @lines = split /\n/, $out;
-    $n->nagios_die("SMcli execution failed for command [$command] - syntax error?") unless ($ret == 0);
+
+    if ($ret != 0){
+           $n->nagios_die("SMcli execution failed for command [$command] - syntax error?") unless (grep { /^Unknown or unresponsive address/ } @lines)
+    }
 
     return @lines;
 }

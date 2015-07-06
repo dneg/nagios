@@ -35,16 +35,10 @@ $n->add_arg(
 $n->getopts;
 $n->nagios_die("no hostname specified") unless $n->opts->hostname;
 
-# Check if raid is alive
-my @is_alive = run_sm_cli($n->opts->hostname, "show storageArray healthStatus;");
-if (grep {/Unknown or unresponsive address/} @is_alive){
-    check_health();
-    $n->nagios_exit($n->check_messages);
-}else{
-    # Run checks
-    check_health();
-    $n->nagios_exit($n->check_messages(join_all => "\n"));
-}
+check_health();
+
+$n->nagios_exit($n->check_messages(join_all => "\n"));
+
 # Storage array health status = optimal.
 
 # Storage array health status = fixing.                                     
@@ -152,15 +146,8 @@ sub check_health {
         if (grep { /^Individual Drive - Degraded Path/ } @output) {
             $n->add_message(CRITICAL, 'degraded drive path');
         }
-        if (grep { /^(SMcli execution failed for command)$/ } @output ) {
-            $n->add_message(CRITICAL, 'cannot connect to raid array');
-        }
-
+        
     }
-    elsif (grep { /^Unknown or unresponsive address/ } @output ) {
-        $n->add_message(CRITICAL, 'Unknown or unresponsive address');
-    }
-
 
     # or unknown
     else {
@@ -172,7 +159,6 @@ sub check_health {
     $n->add_message(OK, join "\n", @output);
 
 }
-
 
 # run a command on a disk array
 sub run_sm_cli {
@@ -188,10 +174,10 @@ sub run_sm_cli {
 
     my $ret = ($? >> 8);
     my @lines = split /\n/, $out;
+    # check if a disk array is unresponsive
+    $n->nagios_exit(CRITICAL, "Cannot contact controller [$hostname] - is it down?") if (grep { /^Unknown or unresponsive address/ } @lines);
 
-    if ($ret != 0){
-           $n->nagios_die("SMcli execution failed for command [$command] - syntax error?") unless (grep { /^Unknown or unresponsive address/ } @lines)
-    }
+    $n->nagios_die("SMcli execution failed for command [$command] - syntax error?") unless ($ret == 0);
 
     return @lines;
 }
@@ -208,4 +194,3 @@ sub find_sm_cli {
     $n->nagios_die("SMcli missing or not executable (tried @sm_cli)") unless ($sm_cli);
     return $sm_cli;
 }
-

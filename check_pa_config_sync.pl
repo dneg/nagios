@@ -40,8 +40,8 @@ sub run_sync_status_check {
     my $palo_alto = $n->opts->hostname;
     my $api_key = $n->opts->key;
     # construct palo alto xml api request url
-    my $uri = URI->new(sprintf("https://%s/api/", $palo_alto));
     my $url = sprintf("https://%s/api/?type=op&key=%s&cmd=%s", $palo_alto, $api_key, uri_escape("<show><high-availability><state></state></high-availability></show>"));
+
     # get XML output from palo alto xml api request
     my $states = XMLin(get($url));
     $n->nagios_exit(CRITICAL, "No results returned from palo altos. Is the host dead? Wrong API key?") unless(defined($states));
